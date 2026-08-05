@@ -1,253 +1,304 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Font Preview Tester</title>
-<style>
-  :root {
-    --bg: #1e1f22;
-    --panel: #2a2b2f;
-    --text: #e8e8e8;
-    --accent: #6ea8fe;
-    --border: #3a3b40;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: var(--bg);
-    color: var(--text);
-  }
-  header {
-    padding: 16px 24px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    background: var(--panel);
-  }
-  header h1 {
-    font-size: 16px;
-    margin: 0;
-    margin-right: auto;
-    font-weight: 600;
-    color: var(--accent);
-  }
-  .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 8px;
-    padding: 10px 16px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-  }
-  .drop-zone.dragover, .drop-zone:hover {
-    border-color: var(--accent);
-    background: #2f3540;
-  }
-  .drop-zone input { display: none; }
-  select, input[type="text"], input[type="number"], input[type="color"] {
-    background: var(--bg);
-    color: var(--text);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 13px;
-  }
-  .control { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #aaa; }
-  main {
-    padding: 32px;
-  }
-  #status {
-    font-size: 13px;
-    color: #999;
-    margin-bottom: 16px;
-  }
-  #status.ok { color: #7fdc7f; }
-  #status.err { color: #ff7a7a; }
-  .sample {
-    outline: none;
-    line-height: 1.4;
-    word-break: break-word;
-  }
-  .sample[contenteditable]:focus {
-    background: rgba(110,168,254,0.05);
-  }
-  .weights {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-  }
-  .weight-row {
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 16px;
-  }
-  .weight-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-    color: #888;
-    margin-bottom: 6px;
-  }
-  .glyphs {
-    font-size: 22px;
-    letter-spacing: .02em;
-    color: #ccc;
-    margin-top: 24px;
-    line-height: 1.8;
-    word-break: break-all;
-  }
-</style>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Tool - Font Preview</title>
+        <link rel="icon" href="/tools/favicon.svg" type="image/svg+xml" />
+        <link
+            rel="fallback icon"
+            href="/tools/favicon.ico"
+            type="image/x-icon"
+        />
+        <style>
+            :root {
+                --bg: #1e1f22;
+                --panel: #2a2b2f;
+                --text: #e8e8e8;
+                --accent: #6ea8fe;
+                --border: #3a3b40;
+            }
+            * {
+                box-sizing: border-box;
+            }
+            body {
+                margin: 0;
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+                background: var(--bg);
+                color: var(--text);
+            }
+            header {
+                padding: 16px 24px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 16px;
+                flex-wrap: wrap;
+                background: var(--panel);
+            }
+            header h1 {
+                font-size: 16px;
+                margin: 0;
+                margin-right: auto;
+                font-weight: 600;
+                color: var(--accent);
+            }
+            .drop-zone {
+                border: 2px dashed var(--border);
+                border-radius: 8px;
+                padding: 10px 16px;
+                font-size: 13px;
+                cursor: pointer;
+                transition:
+                    border-color 0.15s,
+                    background 0.15s;
+            }
+            .drop-zone.dragover,
+            .drop-zone:hover {
+                border-color: var(--accent);
+                background: #2f3540;
+            }
+            .drop-zone input {
+                display: none;
+            }
+            select,
+            input[type="text"],
+            input[type="number"],
+            input[type="color"] {
+                background: var(--bg);
+                color: var(--text);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 6px 8px;
+                font-size: 13px;
+            }
+            .control {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 12px;
+                color: #aaa;
+            }
+            main {
+                padding: 32px;
+            }
+            #status {
+                font-size: 13px;
+                color: #999;
+                margin-bottom: 16px;
+            }
+            #status.ok {
+                color: #7fdc7f;
+            }
+            #status.err {
+                color: #ff7a7a;
+            }
+            .sample {
+                outline: none;
+                line-height: 1.4;
+                word-break: break-word;
+            }
+            .sample[contenteditable]:focus {
+                background: rgba(110, 168, 254, 0.05);
+            }
+            .weights {
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+            .weight-row {
+                border-bottom: 1px solid var(--border);
+                padding-bottom: 16px;
+            }
+            .weight-label {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: #888;
+                margin-bottom: 6px;
+            }
+            .glyphs {
+                font-size: 22px;
+                letter-spacing: 0.02em;
+                color: #ccc;
+                margin-top: 24px;
+                line-height: 1.8;
+                word-break: break-all;
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <h1>Font Preview Tester</h1>
 
-<header>
-  <h1>Font Preview Tester</h1>
+            <label class="drop-zone" id="dropZone">
+                Drop / click to load .woff2, .woff, .ttf, .otf
+                <input
+                    type="file"
+                    id="fileInput"
+                    accept=".woff,.woff2,.ttf,.otf"
+                />
+            </label>
 
-  <label class="drop-zone" id="dropZone">
-    Drop / click to load .woff2, .woff, .ttf, .otf
-    <input type="file" id="fileInput" accept=".woff,.woff2,.ttf,.otf">
-  </label>
+            <div class="control">
+                Size
+                <input
+                    type="number"
+                    id="sizeInput"
+                    value="48"
+                    min="8"
+                    max="300"
+                    style="width: 60px"
+                />
+                px
+            </div>
 
-  <div class="control">
-    Size
-    <input type="number" id="sizeInput" value="48" min="8" max="300" style="width:60px">
-    px
-  </div>
+            <div class="control">
+                Weight
+                <select id="weightInput">
+                    <option value="100">100</option>
+                    <option value="200">200</option>
+                    <option value="300">300</option>
+                    <option value="400" selected>400</option>
+                    <option value="500">500</option>
+                    <option value="600">600</option>
+                    <option value="700">700</option>
+                    <option value="800">800</option>
+                    <option value="900">900</option>
+                </select>
+            </div>
 
-  <div class="control">
-    Weight
-    <select id="weightInput">
-      <option value="100">100</option>
-      <option value="200">200</option>
-      <option value="300">300</option>
-      <option value="400" selected>400</option>
-      <option value="500">500</option>
-      <option value="600">600</option>
-      <option value="700">700</option>
-      <option value="800">800</option>
-      <option value="900">900</option>
-    </select>
-  </div>
+            <div class="control">
+                Color
+                <input type="color" id="colorInput" value="#e8e8e8" />
+            </div>
 
-  <div class="control">
-    Color
-    <input type="color" id="colorInput" value="#e8e8e8">
-  </div>
+            <div class="control">
+                BG
+                <input type="color" id="bgInput" value="#1e1f22" />
+            </div>
+        </header>
 
-  <div class="control">
-    BG
-    <input type="color" id="bgInput" value="#1e1f22">
-  </div>
-</header>
+        <main>
+            <div id="status">
+                No font loaded yet — using system font as placeholder.
+            </div>
 
-<main>
-  <div id="status">No font loaded yet — using system font as placeholder.</div>
+            <div
+                class="sample"
+                id="sample"
+                contenteditable="spellcheck=false"
+                style="font-size: 48px"
+            >
+                The quick brown fox jumps over the lazy dog. 0123456789
+            </div>
 
-  <div class="sample" id="sample" contenteditable="spellcheck=false"
-       style="font-size:48px;">
-The quick brown fox jumps over the lazy dog. 0123456789
-  </div>
+            <div class="weights" id="weights"></div>
 
-  <div class="weights" id="weights"></div>
+            <div class="glyphs" id="glyphs">
+                ABCDEFGHIJKLM NOPQRSTUVWXYZ<br />
+                abcdefghijklm nopqrstuvwxyz<br />
+                0123456789 !@#$%^&amp;*()_+-=[]{}|;:'",.&lt;&gt;/?
+            </div>
+        </main>
 
-  <div class="glyphs" id="glyphs">
-ABCDEFGHIJKLM NOPQRSTUVWXYZ<br>
-abcdefghijklm nopqrstuvwxyz<br>
-0123456789 !@#$%^&amp;*()_+-=[]{}|;:'",.&lt;&gt;/?
-  </div>
-</main>
+        <script>
+            const dropZone = document.getElementById("dropZone");
+            const fileInput = document.getElementById("fileInput");
+            const status = document.getElementById("status");
+            const sample = document.getElementById("sample");
+            const glyphs = document.getElementById("glyphs");
+            const sizeInput = document.getElementById("sizeInput");
+            const weightInput = document.getElementById("weightInput");
+            const colorInput = document.getElementById("colorInput");
+            const bgInput = document.getElementById("bgInput");
+            const weightsBox = document.getElementById("weights");
 
-<script>
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('fileInput');
-const status = document.getElementById('status');
-const sample = document.getElementById('sample');
-const glyphs = document.getElementById('glyphs');
-const sizeInput = document.getElementById('sizeInput');
-const weightInput = document.getElementById('weightInput');
-const colorInput = document.getElementById('colorInput');
-const bgInput = document.getElementById('bgInput');
-const weightsBox = document.getElementById('weights');
+            const FONT_FAMILY = "TestFont";
+            let loadedFont = null;
 
-const FONT_FAMILY = 'TestFont';
-let loadedFont = null;
+            function applyStyles() {
+                sample.style.fontSize = sizeInput.value + "px";
+                sample.style.fontWeight = weightInput.value;
+                sample.style.color = colorInput.value;
+                document.body.style.background = bgInput.value;
+                glyphs.style.fontFamily = loadedFont ? FONT_FAMILY : "inherit";
+            }
 
-function applyStyles() {
-  sample.style.fontSize = sizeInput.value + 'px';
-  sample.style.fontWeight = weightInput.value;
-  sample.style.color = colorInput.value;
-  document.body.style.background = bgInput.value;
-  glyphs.style.fontFamily = loadedFont ? FONT_FAMILY : 'inherit';
-}
+            [sizeInput, weightInput, colorInput, bgInput].forEach((el) =>
+                el.addEventListener("input", applyStyles),
+            );
 
-[sizeInput, weightInput, colorInput, bgInput].forEach(el =>
-  el.addEventListener('input', applyStyles)
-);
+            async function loadFontFile(file) {
+                status.textContent = 'Loading "' + file.name + '"...';
+                status.className = "";
+                try {
+                    const buffer = await file.arrayBuffer();
+                    const fontFace = new FontFace(FONT_FAMILY, buffer);
+                    const loaded = await fontFace.load();
+                    document.fonts.add(loaded);
+                    loadedFont = loaded;
 
-async function loadFontFile(file) {
-  status.textContent = 'Loading "' + file.name + '"...';
-  status.className = '';
-  try {
-    const buffer = await file.arrayBuffer();
-    const fontFace = new FontFace(FONT_FAMILY, buffer);
-    const loaded = await fontFace.load();
-    document.fonts.add(loaded);
-    loadedFont = loaded;
+                    sample.style.fontFamily = FONT_FAMILY;
+                    glyphs.style.fontFamily = FONT_FAMILY;
 
-    sample.style.fontFamily = FONT_FAMILY;
-    glyphs.style.fontFamily = FONT_FAMILY;
+                    status.textContent =
+                        "Loaded: " +
+                        file.name +
+                        " — family: " +
+                        (fontFace.family || FONT_FAMILY);
+                    status.className = "ok";
 
-    status.textContent = 'Loaded: ' + file.name +
-      ' — family: ' + (fontFace.family || FONT_FAMILY);
-    status.className = 'ok';
+                    buildWeightRows();
+                } catch (err) {
+                    status.textContent = "Failed to load font: " + err.message;
+                    status.className = "err";
+                }
+            }
 
-    buildWeightRows();
-  } catch (err) {
-    status.textContent = 'Failed to load font: ' + err.message;
-    status.className = 'err';
-  }
-}
+            function buildWeightRows() {
+                weightsBox.innerHTML = "";
+                const weights = [300, 400, 500, 600, 700, 800];
+                weights.forEach((w) => {
+                    const row = document.createElement("div");
+                    row.className = "weight-row";
+                    row.innerHTML =
+                        '<div class="weight-label">Weight ' +
+                        w +
+                        "</div>" +
+                        "<div style=\"font-family:'" +
+                        FONT_FAMILY +
+                        "'; font-weight:" +
+                        w +
+                        '; font-size:28px;">' +
+                        "The quick brown fox jumps over the lazy dog" +
+                        "</div>";
+                    weightsBox.appendChild(row);
+                });
+            }
 
-function buildWeightRows() {
-  weightsBox.innerHTML = '';
-  const weights = [300, 400, 500, 600, 700, 800];
-  weights.forEach(w => {
-    const row = document.createElement('div');
-    row.className = 'weight-row';
-    row.innerHTML =
-      '<div class="weight-label">Weight ' + w + '</div>' +
-      '<div style="font-family:\'' + FONT_FAMILY + '\'; font-weight:' + w + '; font-size:28px;">' +
-      'The quick brown fox jumps over the lazy dog' +
-      '</div>';
-    weightsBox.appendChild(row);
-  });
-}
+            fileInput.addEventListener("change", (e) => {
+                if (e.target.files[0]) loadFontFile(e.target.files[0]);
+            });
 
-fileInput.addEventListener('change', e => {
-  if (e.target.files[0]) loadFontFile(e.target.files[0]);
-});
+            ["dragover", "dragenter"].forEach((evt) =>
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add("dragover");
+                }),
+            );
+            ["dragleave", "drop"].forEach((evt) =>
+                dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove("dragover");
+                }),
+            );
+            dropZone.addEventListener("drop", (e) => {
+                const file = e.dataTransfer.files[0];
+                if (file) loadFontFile(file);
+            });
 
-['dragover', 'dragenter'].forEach(evt =>
-  dropZone.addEventListener(evt, e => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-  })
-);
-['dragleave', 'drop'].forEach(evt =>
-  dropZone.addEventListener(evt, e => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-  })
-);
-dropZone.addEventListener('drop', e => {
-  const file = e.dataTransfer.files[0];
-  if (file) loadFontFile(file);
-});
-
-applyStyles();
-</script>
-
-</body>
+            applyStyles();
+        </script>
+    </body>
 </html>
