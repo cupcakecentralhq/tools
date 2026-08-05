@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Toolbox</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="fallback icon" href="/favicon.ico" type="image/x-icon" />
+        <style>
+            :root {
+                --bg: #10242b;
+                --bg-deep: #0b1a1f;
+                --panel: #16323c;
+                --panel-hover: #1c3d48;
+                --line: #2a4f5b;
+                --text: #eef4f2;
+                --text-dim: #9fb8bb;
+                --amber: #e8a33d;
+                --amber-dim: #b9822f;
+                --teal: #5fb3ad;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html {
+                scroll-behavior: smooth;
+            }
+
+            body {
+                margin: 0;
+                background:
+                    radial-gradient(
+                            circle at 1px 1px,
+                            rgba(255, 255, 255, 0.035) 1px,
+                            transparent 0
+                        )
+                        0 0/22px 22px,
+                    var(--bg);
+                color: var(--text);
+                font-family: "IBM Plex Sans", sans-serif;
+                min-height: 100vh;
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                * {
+                    animation: none !important;
+                    transition: none !important;
+                }
+            }
+
+            /* ---------- HERO ---------- */
+
+            header {
+                padding: 88px 24px 64px;
+                text-align: center;
+                position: relative;
+                border-bottom: 1px solid var(--line);
+                background: linear-gradient(180deg, var(--bg-deep), var(--bg));
+            }
+
+            .eyebrow {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 12px;
+                letter-spacing: 0.18em;
+                text-transform: uppercase;
+                color: var(--amber);
+                margin-bottom: 18px;
+                display: inline-flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .eyebrow::before,
+            .eyebrow::after {
+                content: "";
+                width: 24px;
+                height: 1px;
+                background: var(--amber-dim);
+            }
+
+            h1 {
+                font-family: "JetBrains Mono", monospace;
+                font-weight: 800;
+                font-size: clamp(38px, 7vw, 74px);
+                line-height: 1.02;
+                margin: 0;
+                letter-spacing: -0.01em;
+                color: var(--text);
+            }
+
+            h1 .bracket {
+                color: var(--amber);
+            }
+
+            header p.sub {
+                max-width: 480px;
+                margin: 22px auto 0;
+                color: var(--text-dim);
+                font-size: 16px;
+                line-height: 1.55;
+            }
+
+            header p.sub code {
+                font-family: "JetBrains Mono", monospace;
+                background: var(--panel);
+                border: 1px solid var(--line);
+                padding: 1px 6px;
+                border-radius: 4px;
+                color: var(--teal);
+                font-size: 13.5px;
+            }
+
+            /* ---------- GRID ---------- */
+
+            main {
+                max-width: 1080px;
+                margin: 0 auto;
+                padding: 64px 24px 100px;
+            }
+
+            .grid-label {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 12px;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                color: var(--text-dim);
+                margin: 0 0 24px 4px;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 18px;
+            }
+
+            .card {
+                position: relative;
+                background: var(--panel);
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                padding: 26px 20px 22px;
+                text-decoration: none;
+                color: var(--text);
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+                transition:
+                    transform 0.16s ease,
+                    border-color 0.16s ease,
+                    background 0.16s ease;
+                overflow: hidden;
+            }
+
+            .card::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 3px;
+                background: var(--amber);
+                transform: scaleX(0);
+                transform-origin: left;
+                transition: transform 0.18s ease;
+            }
+
+            .card:hover,
+            .card:focus-visible {
+                transform: translateY(-3px);
+                background: var(--panel-hover);
+                border-color: var(--amber-dim);
+                outline: none;
+            }
+
+            .card:hover::before,
+            .card:focus-visible::before {
+                transform: scaleX(1);
+            }
+
+            .card .logo {
+                width: 44px;
+                height: 44px;
+                border-radius: 8px;
+                background: var(--bg-deep);
+                border: 1px solid var(--line);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 21px;
+            }
+
+            .card .logo img,
+            .card .logo svg {
+                width: 24px;
+                height: 24px;
+            }
+
+            .card .name {
+                font-family: "JetBrains Mono", monospace;
+                font-weight: 600;
+                font-size: 15.5px;
+            }
+
+            .card .desc {
+                font-size: 13px;
+                color: var(--text-dim);
+                line-height: 1.5;
+                margin-top: -8px;
+            }
+
+            /* ---------- ADD-CARD PLACEHOLDER ---------- */
+
+            .card.add-new {
+                align-items: center;
+                justify-content: center;
+                text-align: center;
+                border-style: dashed;
+                color: var(--text-dim);
+                min-height: 140px;
+            }
+
+            .card.add-new::before {
+                display: none;
+            }
+
+            .card.add-new .plus {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 22px;
+                color: var(--amber-dim);
+            }
+
+            .card.add-new:hover {
+                border-color: var(--amber-dim);
+                color: var(--text);
+            }
+
+            footer {
+                text-align: center;
+                padding: 32px 24px 48px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 12px;
+                color: var(--text-dim);
+                border-top: 1px solid var(--line);
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="eyebrow">personal utility drawer</div>
+            <h1>Tool<span class="bracket">/</span>box</h1>
+            <p class="sub">
+                A shelf of small, single-purpose pages — no installs, no
+                accounts. Pick one below and it opens right in the browser.
+            </p>
+        </header>
+
+        <main>
+            <p class="grid-label">// available tools</p>
+
+            <div class="grid">
+                <a class="card" href="/font-preview/">
+                    <div class="logo">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="size-6"
+                        >
+                            <path
+                                stroke-linejoin="round"
+                                d="M6.75 3.744h-.753v8.25h7.125a4.125 4.125 0 0 0 0-8.25H6.75Zm0 0v.38m0 16.122h6.747a4.5 4.5 0 0 0 0-9.001h-7.5v9h.753Zm0 0v-.37m0-15.751h6a3.75 3.75 0 1 1 0 7.5h-6m0-7.5v7.5m0 0v8.25m0-8.25h6.375a4.125 4.125 0 0 1 0 8.25H6.75m.747-15.38h4.875a3.375 3.375 0 0 1 0 6.75H7.497v-6.75Zm0 7.5h5.25a3.75 3.75 0 0 1 0 7.5h-5.25v-7.5Z"
+                            />
+                        </svg>
+                    </div>
+                    <div class="name">Font Preview</div>
+                    <div class="desc">
+                        Drop in a .woff2/.ttf and see it rendered at different
+                        sizes and weights.
+                    </div>
+                </a>
+
+                <a class="card" href="/cupcake-positioner">
+                    <div class="logo">
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke-width="1.5"
+                            stroke="currentColor"
+                            class="size-6"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M6 13.5V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m12-3V3.75m0 9.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 3.75V16.5m-6-9V3.75m0 3.75a1.5 1.5 0 0 1 0 3m0-3a1.5 1.5 0 0 0 0 3m0 9.75V10.5"
+                            />
+                        </svg>
+                    </div>
+                    <div class="name">Cupcake Positioner</div>
+                    <div class="desc">Align cupcakes with boxes.</div>
+                </a>
+            </div>
+        </main>
+
+        <footer>built one weekend afternoon at a time</footer>
+    </body>
+</html>
