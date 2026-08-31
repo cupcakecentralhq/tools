@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Tool - Photo Cake Positioner</title>
+        <link rel="icon" href="/tools/favicon.svg" type="image/svg+xml" />
+        <link
+            rel="fallback icon"
+            href="/tools/favicon.ico"
+            type="image/x-icon"
+        />
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&display=swap");
+
+            :root {
+                --bg: #10242b;
+                --bg-deep: #0b1a1f;
+                --panel: #16323c;
+                --panel-hover: #1c3d48;
+                --line: #2a4f5b;
+                --text: #eef4f2;
+                --text-dim: #9fb8bb;
+                --amber: #e8a33d;
+                --amber-dark: #b9822f;
+                --teal: #5fb3ad;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                background:
+                    radial-gradient(
+                            circle at 1px 1px,
+                            rgba(255, 255, 255, 0.035) 1px,
+                            transparent 0
+                        )
+                        0 0/22px 22px,
+                    var(--bg);
+                color: var(--text);
+                font-family: "IBM Plex Sans", sans-serif;
+                padding: 24px;
+                min-height: 100vh;
+            }
+
+            h1 {
+                font-family: "JetBrains Mono", monospace;
+                font-weight: 700;
+                font-size: 22px;
+                margin: 0 0 6px;
+                color: var(--text);
+            }
+
+            p.sub {
+                color: var(--text-dim);
+                margin: 0 0 24px;
+                font-size: 14px;
+                line-height: 1.5;
+            }
+
+            .layout {
+                display: flex;
+                gap: 20px;
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            /* Container panels */
+            .stage-wrap,
+            .panel {
+                background: var(--panel);
+                border: 1px solid var(--line);
+                border-radius: 10px;
+                padding: 20px;
+            }
+
+            .stage-wrap {
+                flex: 1 1 500px;
+            }
+
+            .panel {
+                flex: 1 1 320px;
+                max-width: 420px;
+            }
+
+            .panel h2 {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 14px;
+                margin: 0 0 12px;
+                color: var(--amber);
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+
+            .toolbar {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+                margin-bottom: 16px;
+                align-items: center;
+            }
+
+            /* Buttons */
+            button {
+                background: var(--amber);
+                color: var(--bg-deep);
+                border: none;
+                border-radius: 6px;
+                padding: 8px 14px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 13px;
+                cursor: pointer;
+                font-weight: 600;
+                transition:
+                    background 0.16s ease,
+                    transform 0.1s ease;
+            }
+
+            button:hover {
+                background: var(--amber-dark);
+            }
+
+            button:active {
+                transform: translateY(1px);
+            }
+
+            button.secondary,
+            label.file-btn {
+                background: var(--bg-deep);
+                color: var(--text);
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                padding: 8px 14px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 13px;
+                cursor: pointer;
+                font-weight: 600;
+                transition:
+                    background 0.16s ease,
+                    border-color 0.16s ease;
+            }
+
+            button.secondary:hover,
+            label.file-btn:hover {
+                background: var(--panel-hover);
+                border-color: var(--amber-dark);
+            }
+
+            input[type="file"] {
+                display: none;
+            }
+
+            /* Inputs & Textareas */
+            input[type="number"],
+            textarea,
+            #jsonInput {
+                background: var(--bg-deep);
+                color: var(--text);
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 12px;
+                padding: 8px 10px;
+                outline: none;
+                transition: border-color 0.16s ease;
+            }
+
+            input[type="number"] {
+                width: 65px;
+            }
+
+            textarea,
+            #jsonInput {
+                width: 100%;
+                height: 140px;
+                resize: vertical;
+                margin-top: 8px;
+            }
+
+            textarea {
+                height: 180px;
+            }
+
+            input[type="number"]:focus,
+            textarea:focus,
+            #jsonInput:focus {
+                border-color: var(--amber);
+            }
+
+            /* Canvas / Stage area */
+            #stage {
+                position: relative;
+                width: 100%;
+                max-width: 600px;
+                aspect-ratio: 1 / 1;
+                background: var(--bg-deep)
+                    repeating-conic-gradient(#10242b 0% 25%, #16323c 0% 50%)
+                    50% / 20px 20px;
+                border-radius: 8px;
+                overflow: hidden;
+                border: 1px dashed var(--line);
+                margin: 0 auto;
+            }
+
+            #boxImg {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: fill;
+                pointer-events: none;
+                user-select: none;
+            }
+
+            /* Dynamic element items */
+            .cake {
+                position: absolute;
+                width: 14%;
+                aspect-ratio: 1/1;
+                border-radius: 50%;
+                border: 2px solid var(--teal);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+                transform: translate(-50%, -50%);
+                cursor: grab;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: var(--text);
+                font-family: "JetBrains Mono", monospace;
+                font-size: 11px;
+                font-weight: 700;
+                touch-action: none;
+                background-size: cover;
+                background-position: center;
+                overflow: hidden;
+            }
+
+            .cake:active {
+                cursor: grabbing;
+            }
+
+            .cake.selected {
+                outline: 2px solid var(--amber);
+                border-color: var(--amber);
+            }
+
+            .cake img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                border-radius: 50%;
+                pointer-events: none;
+                display: block;
+            }
+
+            .cake .badge {
+                position: absolute;
+                bottom: -2px;
+                right: -2px;
+                background: var(--bg-deep);
+                color: var(--amber);
+                border-radius: 50%;
+                width: 18px;
+                height: 18px;
+                font-size: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border: 1px solid var(--amber-dark);
+            }
+
+            /* Tabs */
+            .tabs {
+                display: flex;
+                gap: 6px;
+                margin-bottom: 12px;
+            }
+
+            .tabs button {
+                background: var(--bg-deep);
+                color: var(--text-dim);
+                border: 1px solid var(--line);
+                font-weight: 600;
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+
+            .tabs button:hover {
+                color: var(--text);
+                background: var(--panel-hover);
+            }
+
+            .tabs button.active {
+                background: var(--amber);
+                color: var(--bg-deep);
+                border-color: var(--amber);
+            }
+
+            .tabpanel {
+                display: none;
+            }
+
+            .tabpanel.active {
+                display: block;
+            }
+
+            /* Layout rows & lists */
+            .row-buttons,
+            .out-row {
+                display: flex;
+                gap: 8px;
+                margin-top: 10px;
+            }
+
+            #list {
+                max-height: 260px;
+                overflow-y: auto;
+                font-size: 12px;
+                font-family: "JetBrains Mono", monospace;
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                background: var(--bg-deep);
+            }
+
+            .row {
+                display: flex;
+                justify-content: space-between;
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .row:last-child {
+                border-bottom: none;
+            }
+
+            .row span.name {
+                font-weight: 600;
+                color: var(--text);
+            }
+
+            .row span.vals {
+                color: var(--text-dim);
+                font-variant-numeric: tabular-nums;
+            }
+
+            .hint {
+                font-size: 12px;
+                color: var(--text-dim);
+                margin-top: 12px;
+                line-height: 1.5;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>Photo Cake Positioner</h1>
+        <p class="sub">
+            Upload the cake image, drag the photo into place, copy the %
+            positions.
+        </p>
+
+        <div class="layout">
+            <div class="stage-wrap">
+                <div class="toolbar">
+                    <label class="file-btn"
+                        >Upload box image
+                        <input type="file" id="fileInput" accept="image/*" />
+                    </label>
+                    <label class="file-btn"
+                        >Upload cake image
+                        <input
+                            type="file"
+                            id="cakeFileInput"
+                            accept="image/*"
+                        />
+                    </label>
+                    <button id="addBtn" class="secondary">+ Add cake</button>
+                    <button id="removeBtn" class="secondary">
+                        Remove selected
+                    </button>
+                    <span style="font-size: 12px; color: var(--muted)"
+                        >Size:</span
+                    >
+                    <input
+                        type="number"
+                        id="sizeInput"
+                        value="14"
+                        min="4"
+                        max="100"
+                    />
+                    %
+                    <span style="font-size: 12px; color: var(--muted)"
+                        >Rotate:</span
+                    >
+                    <input
+                        type="number"
+                        id="rotationInput"
+                        value="0"
+                        min="-360"
+                        max="360"
+                        step="1"
+                    />
+                    deg
+                    <span style="font-size: 12px; color: var(--muted)"
+                        >Skew X:</span
+                    >
+                    <input
+                        type="number"
+                        id="skewXInput"
+                        value="0"
+                        min="-80"
+                        max="80"
+                        step="1"
+                    />
+                    deg
+                    <span style="font-size: 12px; color: var(--muted)"
+                        >Skew Y:</span
+                    >
+                    <input
+                        type="number"
+                        id="skewYInput"
+                        value="0"
+                        min="-80"
+                        max="80"
+                        step="1"
+                    />
+                    deg
+                </div>
+                <div id="stage">
+                    <img id="boxImg" src="" style="display: none" />
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="tabs">
+                    <button id="tabViewBtn" class="active">
+                        List / Output
+                    </button>
+                    <button id="tabEditBtn">Edit as JSON</button>
+                </div>
+
+                <div id="tabView" class="tabpanel active">
+                    <h2>Positions (top / left, %)</h2>
+                    <div id="list"></div>
+                    <textarea id="output" readonly></textarea>
+                    <div class="out-row">
+                        <button id="copyBtn">Copy CSS + JSON</button>
+                        <button id="copyMinBtn" class="secondary">
+                            Copy minified JSON
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tabEdit" class="tabpanel">
+                    <h2>Paste / edit JSON array</h2>
+                    <textarea
+                        id="jsonInput"
+                        placeholder='[{"id":1,"top":50,"left":50,"size":14}, ...]'
+                    ></textarea>
+                    <div class="row-buttons">
+                        <button id="applyJsonBtn">Apply to board</button>
+                        <button id="loadCurrentBtn" class="secondary">
+                            Load current positions
+                        </button>
+                    </div>
+                    <div
+                        class="hint"
+                        id="jsonError"
+                        style="color: #b8557a"
+                    ></div>
+                </div>
+
+                <div class="hint">
+                    Click a cake to select it (for resizing, rotating, skewing,
+                    or removing). Drag anywhere on the box to reposition. Use
+                    Skew X / Skew Y to fake perspective when the box surface
+                    isn't flat-on to the camera (e.g. a tilted lid or an angled
+                    photo). Values are percentages relative to the box
+                    container, so they'll match
+                    <code>top</code>/<code>left</code> on an absolutely
+                    positioned element inside a container the same shape as this
+                    box.
+                </div>
+            </div>
+        </div>
+
+        <script>
+            const stage = document.getElementById("stage");
+            const boxImg = document.getElementById("boxImg");
+            const fileInput = document.getElementById("fileInput");
+            const cakeFileInput = document.getElementById("cakeFileInput");
+            const addBtn = document.getElementById("addBtn");
+            const removeBtn = document.getElementById("removeBtn");
+            const sizeInput = document.getElementById("sizeInput");
+            const rotationInput = document.getElementById("rotationInput");
+            const skewXInput = document.getElementById("skewXInput");
+            const skewYInput = document.getElementById("skewYInput");
+            const listEl = document.getElementById("list");
+            const output = document.getElementById("output");
+            const copyBtn = document.getElementById("copyBtn");
+            const copyMinBtn = document.getElementById("copyMinBtn");
+            const tabViewBtn = document.getElementById("tabViewBtn");
+            const tabEditBtn = document.getElementById("tabEditBtn");
+            const tabView = document.getElementById("tabView");
+            const tabEdit = document.getElementById("tabEdit");
+            const jsonInput = document.getElementById("jsonInput");
+            const applyJsonBtn = document.getElementById("applyJsonBtn");
+            const loadCurrentBtn = document.getElementById("loadCurrentBtn");
+            const jsonError = document.getElementById("jsonError");
+
+            let cakes = []; // {id, top, left, size}
+            let selectedId = null;
+            let counter = 0;
+            let cakeImgSrc = null; // shared sample cake image, data URL
+
+            fileInput.addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    boxImg.src = ev.target.result;
+                    boxImg.style.display = "block";
+                    boxImg.onload = () => {
+                        const ratio =
+                            boxImg.naturalWidth / boxImg.naturalHeight;
+                        if (ratio > 0) {
+                            stage.style.aspectRatio = ratio;
+                        }
+                    };
+                };
+                reader.readAsDataURL(file);
+            });
+
+            cakeFileInput.addEventListener("change", (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    cakeImgSrc = ev.target.result;
+                    render();
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // --- tabs ---
+            tabViewBtn.addEventListener("click", () => {
+                tabViewBtn.classList.add("active");
+                tabEditBtn.classList.remove("active");
+                tabView.classList.add("active");
+                tabEdit.classList.remove("active");
+            });
+            tabEditBtn.addEventListener("click", () => {
+                tabEditBtn.classList.add("active");
+                tabViewBtn.classList.remove("active");
+                tabEdit.classList.add("active");
+                tabView.classList.remove("active");
+                loadCurrentIntoJson();
+            });
+
+            function loadCurrentIntoJson() {
+                jsonInput.value = JSON.stringify(
+                    cakes.map(
+                        ({ id, top, left, size, rotation, skewX, skewY }) => ({
+                            id,
+                            top: +top.toFixed(2),
+                            left: +left.toFixed(2),
+                            size,
+                            rotation: rotation || 0,
+                            skewX: skewX || 0,
+                            skewY: skewY || 0,
+                        }),
+                    ),
+                    null,
+                    2,
+                );
+                jsonError.textContent = "";
+            }
+            loadCurrentBtn.addEventListener("click", loadCurrentIntoJson);
+
+            applyJsonBtn.addEventListener("click", () => {
+                try {
+                    const inputValue = jsonInput.value.replace(/\\"/g, '"');
+                    const parsed = JSON.parse(inputValue);
+                    if (!Array.isArray(parsed))
+                        throw new Error("JSON must be an array");
+                    const cleaned = parsed.map((item, i) => {
+                        const top = Number(item.top);
+                        const left = Number(item.left);
+                        const size =
+                            Number(item.size) ||
+                            parseFloat(sizeInput.value) ||
+                            14;
+                        if (isNaN(top) || isNaN(left))
+                            throw new Error(`Item ${i} missing valid top/left`);
+                        let rotation = Number(item.rotation);
+                        if (isNaN(rotation)) rotation = 0;
+                        let skewX = Number(item.skewX);
+                        if (isNaN(skewX)) skewX = 0;
+                        let skewY = Number(item.skewY);
+                        if (isNaN(skewY)) skewY = 0;
+                        return {
+                            id: item.id != null ? Number(item.id) : i + 1,
+                            top: Math.max(0, Math.min(100, top)),
+                            left: Math.max(0, Math.min(100, left)),
+                            size: Math.max(1, Math.min(100, size)),
+                            rotation: ((rotation % 360) + 360) % 360,
+                            skewX: Math.max(-80, Math.min(80, skewX)),
+                            skewY: Math.max(-80, Math.min(80, skewY)),
+                        };
+                    });
+                    cakes = cleaned;
+                    counter = Math.max(0, ...cakes.map((c) => c.id));
+                    selectedId = cakes.length ? cakes[0].id : null;
+                    jsonError.textContent = `Applied ${cakes.length} position(s).`;
+                    jsonError.style.color = "#3a7d44";
+                    render();
+                } catch (err) {
+                    jsonError.style.color = "#b8557a";
+                    jsonError.textContent = "Error: " + err.message;
+                }
+            });
+
+            function addcake(top = 50, left = 50) {
+                counter++;
+                const size = parseFloat(sizeInput.value) || 14;
+                const cc = {
+                    id: counter,
+                    top,
+                    left,
+                    size,
+                    rotation: 0,
+                    skewX: 0,
+                    skewY: 0,
+                };
+                cakes.push(cc);
+                selectedId = cc.id;
+                rotationInput.value = 0;
+                skewXInput.value = 0;
+                skewYInput.value = 0;
+                render();
+            }
+
+            addBtn.addEventListener("click", () => addcake(50, 50));
+
+            removeBtn.addEventListener("click", () => {
+                if (selectedId == null) return;
+                cakes = cakes.filter((c) => c.id !== selectedId);
+                selectedId = null;
+                render();
+            });
+
+            sizeInput.addEventListener("input", () => {
+                if (selectedId == null) return;
+                const cc = cakes.find((c) => c.id === selectedId);
+                if (cc) {
+                    cc.size = parseFloat(sizeInput.value) || 14;
+                    render();
+                }
+            });
+
+            rotationInput.addEventListener("input", () => {
+                if (selectedId == null) return;
+                const cc = cakes.find((c) => c.id === selectedId);
+                if (cc) {
+                    cc.rotation = parseFloat(rotationInput.value) || 0;
+                    render();
+                }
+            });
+
+            skewXInput.addEventListener("input", () => {
+                if (selectedId == null) return;
+                const cc = cakes.find((c) => c.id === selectedId);
+                if (cc) {
+                    cc.skewX = parseFloat(skewXInput.value) || 0;
+                    render();
+                }
+            });
+
+            skewYInput.addEventListener("input", () => {
+                if (selectedId == null) return;
+                const cc = cakes.find((c) => c.id === selectedId);
+                if (cc) {
+                    cc.skewY = parseFloat(skewYInput.value) || 0;
+                    render();
+                }
+            });
+
+            function render() {
+                // remove existing cake elements
+                stage.querySelectorAll(".cake").forEach((el) => el.remove());
+
+                cakes.forEach((cc) => {
+                    const el = document.createElement("div");
+                    el.className =
+                        "cake" + (cc.id === selectedId ? " selected" : "");
+                    el.style.top = cc.top + "%";
+                    el.style.left = cc.left + "%";
+                    el.style.width = cc.size + "%";
+                    el.dataset.id = cc.id;
+
+                    if (cakeImgSrc) {
+                        const img = document.createElement("img");
+                        img.src = cakeImgSrc;
+                        img.style.transform = `rotate(${cc.rotation || 0}deg) skewX(${cc.skewX || 0}deg) skewY(${cc.skewY || 0}deg)`;
+                        el.appendChild(img);
+                    } else {
+                        el.textContent = cc.id;
+                    }
+                    const badge = document.createElement("span");
+                    badge.className = "badge";
+                    badge.textContent = cc.id;
+                    if (cakeImgSrc) el.appendChild(badge);
+                    makeDraggable(el, cc);
+                    stage.prepend(el);
+                });
+
+                // list
+                listEl.innerHTML =
+                    cakes
+                        .map(
+                            (cc) =>
+                                `<div class="row"><span class="name">#${cc.id}</span><span class="vals">top: ${cc.top.toFixed(2)}%  left: ${cc.left.toFixed(2)}%  size: ${cc.size}%  rot: ${cc.rotation || 0}deg  skew: ${cc.skewX || 0}/${cc.skewY || 0}deg</span></div>`,
+                        )
+                        .join("") ||
+                    '<div class="row"><span class="vals">No cakes yet — click "Add cake"</span></div>';
+
+                // output
+                const cssBlock = cakes
+                    .map(
+                        (cc) =>
+                            `.cake-${cc.id} {
+  position: absolute;
+  top: ${cc.top.toFixed(2)}%;
+  left: ${cc.left.toFixed(2)}%;
+  width: ${cc.size}%;
+  transform: translate(-50%, -50%) rotate(${cc.rotation || 0}deg) skewX(${cc.skewX || 0}deg) skewY(${cc.skewY || 0}deg);
+}`,
+                    )
+                    .join("\n\n");
+
+                const jsonBlock = JSON.stringify(
+                    cakes.map(
+                        ({ id, top, left, size, rotation, skewX, skewY }) => ({
+                            id,
+                            top: +top.toFixed(2),
+                            left: +left.toFixed(2),
+                            size,
+                            rotation: rotation || 0,
+                            skewX: skewX || 0,
+                            skewY: skewY || 0,
+                        }),
+                    ),
+                    null,
+                    2,
+                );
+
+                output.value = cssBlock + "\n\n/* JSON */\n" + jsonBlock;
+            }
+
+            function makeDraggable(el, cc) {
+                let dragging = false;
+
+                el.addEventListener("pointerdown", (e) => {
+                    dragging = true;
+                    el.setPointerCapture(e.pointerId);
+                    e.preventDefault();
+                    if (selectedId !== cc.id) {
+                        selectedId = cc.id;
+                        sizeInput.value = cc.size;
+                        rotationInput.value = cc.rotation || 0;
+                        skewXInput.value = cc.skewX || 0;
+                        skewYInput.value = cc.skewY || 0;
+                        stage
+                            .querySelectorAll(".cake")
+                            .forEach((c) =>
+                                c.classList.toggle(
+                                    "selected",
+                                    c.dataset.id == cc.id,
+                                ),
+                            );
+                    }
+                });
+
+                el.addEventListener("pointermove", (e) => {
+                    if (!dragging) return;
+                    const rect = stage.getBoundingClientRect();
+                    let left = ((e.clientX - rect.left) / rect.width) * 100;
+                    let top = ((e.clientY - rect.top) / rect.height) * 100;
+                    left = Math.max(0, Math.min(100, left));
+                    top = Math.max(0, Math.min(100, top));
+                    cc.top = top;
+                    cc.left = left;
+                    el.style.top = top + "%";
+                    el.style.left = left + "%";
+                    updateListLive();
+                });
+
+                el.addEventListener("pointerup", (e) => {
+                    dragging = false;
+                    render();
+                });
+            }
+
+            function updateListLive() {
+                // lightweight update of the list text without full re-render (avoids jitter while dragging)
+                const rows = listEl.querySelectorAll(".row");
+                cakes.forEach((cc, i) => {
+                    if (rows[i]) {
+                        rows[i].querySelector(".vals").textContent =
+                            `top: ${cc.top.toFixed(2)}%  left: ${cc.left.toFixed(2)}%  size: ${cc.size}%`;
+                    }
+                });
+            }
+
+            copyBtn.addEventListener("click", () => {
+                output.select();
+                document.execCommand("copy");
+                copyBtn.textContent = "Copied!";
+                setTimeout(
+                    () => (copyBtn.textContent = "Copy CSS + JSON"),
+                    1200,
+                );
+            });
+
+            copyMinBtn.addEventListener("click", async () => {
+                const minified = JSON.stringify(
+                    cakes.map(
+                        ({ id, top, left, size, rotation, skewX, skewY }) => ({
+                            id,
+                            top: +top.toFixed(2),
+                            left: +left.toFixed(2),
+                            size,
+                            rotation: rotation || 0,
+                            skewX: skewX || 0,
+                            skewY: skewY || 0,
+                        }),
+                    ),
+                );
+                const escapedJson = JSON.stringify(minified).slice(1, -1);
+                try {
+                    await navigator.clipboard.writeText(escapedJson);
+                } catch (e) {
+                    const ta = document.createElement("textarea");
+                    ta.value = escapedJson;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(ta);
+                }
+                copyMinBtn.textContent = "Copied!";
+                setTimeout(
+                    () => (copyMinBtn.textContent = "Copy minified JSON"),
+                    1200,
+                );
+            });
+
+            // seed with one cake to start
+            addcake(50, 50);
+        </script>
+    </body>
+</html>
