@@ -212,9 +212,29 @@
                 object-fit: fill;
                 pointer-events: none;
                 user-select: none;
+                z-index: 5;
             }
 
             /* Dynamic element items */
+            /* .cake-photo: just the image, clipped to a circle, sits BELOW the box image */
+            .cake-photo {
+                position: absolute;
+                aspect-ratio: 1/1;
+                border-radius: 50%;
+                overflow: hidden;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .cake-photo img {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            /* .cake: the frame (outline) + drag target + corner handles, ALWAYS above the box image */
             .cake {
                 position: absolute;
                 width: 14%;
@@ -232,9 +252,12 @@
                 font-size: 11px;
                 font-weight: 700;
                 touch-action: none;
-                background-size: cover;
-                background-position: center;
-                overflow: hidden;
+                background: transparent;
+                z-index: 10;
+            }
+
+            .cake.selected {
+                z-index: 20;
             }
 
             .cake:active {
@@ -244,15 +267,6 @@
             .cake.selected {
                 outline: 2px solid var(--amber);
                 border-color: var(--amber);
-            }
-
-            .cake img {
-                width: 100%;
-                height: 100%;
-                object-fit: cover;
-                border-radius: 50%;
-                pointer-events: none;
-                display: block;
             }
 
             .cake .badge {
@@ -345,6 +359,61 @@
                 font-variant-numeric: tabular-nums;
             }
 
+            .corner-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-top: 14px;
+                max-width: 600px;
+            }
+
+            .corner-cell {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                background: var(--bg-deep);
+                border: 1px solid var(--line);
+                border-radius: 6px;
+                padding: 6px 8px;
+                flex-wrap: wrap;
+            }
+
+            .corner-label {
+                font-family: "JetBrains Mono", monospace;
+                font-size: 11px;
+                color: var(--text-dim);
+                width: 100%;
+                margin-bottom: 2px;
+            }
+
+            .corner-cell input[type="number"] {
+                width: 54px;
+            }
+
+            .corner-cell .axis {
+                font-size: 11px;
+                color: var(--text-dim);
+                margin-right: 4px;
+            }
+
+            .corner-handle {
+                position: absolute;
+                width: 12px;
+                height: 12px;
+                margin: -6px 0 0 -6px;
+                border-radius: 50%;
+                background: var(--amber);
+                border: 2px solid var(--bg-deep);
+                cursor: grab;
+                touch-action: none;
+                z-index: 30;
+                box-shadow: 0 0 0 1px var(--amber-dark);
+            }
+
+            .corner-handle:active {
+                cursor: grabbing;
+            }
+
             .hint {
                 font-size: 12px;
                 color: var(--text-dim);
@@ -364,21 +433,17 @@
             <div class="stage-wrap">
                 <div class="toolbar">
                     <label class="file-btn"
-                        >Upload box image
+                        >Upload cake image
                         <input type="file" id="fileInput" accept="image/*" />
                     </label>
                     <label class="file-btn"
-                        >Upload cake image
+                        >Upload photo image
                         <input
                             type="file"
                             id="cakeFileInput"
                             accept="image/*"
                         />
                     </label>
-                    <button id="addBtn" class="secondary">+ Add cake</button>
-                    <button id="removeBtn" class="secondary">
-                        Remove selected
-                    </button>
                     <span style="font-size: 12px; color: var(--muted)"
                         >Size:</span
                     >
@@ -402,33 +467,78 @@
                         step="1"
                     />
                     deg
-                    <span style="font-size: 12px; color: var(--muted)"
-                        >Skew X:</span
+                    <button
+                        type="button"
+                        id="resetCornersBtn"
+                        class="secondary"
                     >
-                    <input
-                        type="number"
-                        id="skewXInput"
-                        value="0"
-                        min="-80"
-                        max="80"
-                        step="1"
-                    />
-                    deg
-                    <span style="font-size: 12px; color: var(--muted)"
-                        >Skew Y:</span
-                    >
-                    <input
-                        type="number"
-                        id="skewYInput"
-                        value="0"
-                        min="-80"
-                        max="80"
-                        step="1"
-                    />
-                    deg
+                        Reset corners
+                    </button>
                 </div>
                 <div id="stage">
                     <img id="boxImg" src="" style="display: none" />
+                </div>
+                <div class="corner-grid">
+                    <div class="corner-cell">
+                        <span class="corner-label">Top-left</span>
+                        <input
+                            type="number"
+                            id="cornerTLx"
+                            value="0"
+                            step="1"
+                        /><span class="axis">x</span>
+                        <input
+                            type="number"
+                            id="cornerTLy"
+                            value="0"
+                            step="1"
+                        /><span class="axis">y</span>
+                    </div>
+                    <div class="corner-cell">
+                        <span class="corner-label">Top-right</span>
+                        <input
+                            type="number"
+                            id="cornerTRx"
+                            value="0"
+                            step="1"
+                        /><span class="axis">x</span>
+                        <input
+                            type="number"
+                            id="cornerTRy"
+                            value="0"
+                            step="1"
+                        /><span class="axis">y</span>
+                    </div>
+                    <div class="corner-cell">
+                        <span class="corner-label">Bottom-left</span>
+                        <input
+                            type="number"
+                            id="cornerBLx"
+                            value="0"
+                            step="1"
+                        /><span class="axis">x</span>
+                        <input
+                            type="number"
+                            id="cornerBLy"
+                            value="0"
+                            step="1"
+                        /><span class="axis">y</span>
+                    </div>
+                    <div class="corner-cell">
+                        <span class="corner-label">Bottom-right</span>
+                        <input
+                            type="number"
+                            id="cornerBRx"
+                            value="0"
+                            step="1"
+                        /><span class="axis">x</span>
+                        <input
+                            type="number"
+                            id="cornerBRy"
+                            value="0"
+                            step="1"
+                        /><span class="axis">y</span>
+                    </div>
                 </div>
             </div>
 
@@ -441,22 +551,22 @@
                 </div>
 
                 <div id="tabView" class="tabpanel active">
-                    <h2>Positions (top / left, %)</h2>
+                    <h2>Position (top / left, %)</h2>
                     <div id="list"></div>
                     <textarea id="output" readonly></textarea>
                     <div class="out-row">
                         <button id="copyBtn">Copy CSS + JSON</button>
                         <button id="copyMinBtn" class="secondary">
-                            Copy minified JSON
+                            Copy | list
                         </button>
                     </div>
                 </div>
 
                 <div id="tabEdit" class="tabpanel">
-                    <h2>Paste / edit JSON array</h2>
+                    <h2>Paste / edit JSON</h2>
                     <textarea
                         id="jsonInput"
-                        placeholder='[{"id":1,"top":50,"left":50,"size":14}, ...]'
+                        placeholder='{"top":50,"left":50,"size":14,"rotation":0,"skewX":0,"skewY":0}'
                     ></textarea>
                     <div class="row-buttons">
                         <button id="applyJsonBtn">Apply to board</button>
@@ -472,15 +582,16 @@
                 </div>
 
                 <div class="hint">
-                    Click a cake to select it (for resizing, rotating, skewing,
-                    or removing). Drag anywhere on the box to reposition. Use
-                    Skew X / Skew Y to fake perspective when the box surface
-                    isn't flat-on to the camera (e.g. a tilted lid or an angled
-                    photo). Values are percentages relative to the box
-                    container, so they'll match
-                    <code>top</code>/<code>left</code> on an absolutely
-                    positioned element inside a container the same shape as this
-                    box.
+                    Drag the photo anywhere on the box to reposition it. When
+                    selected, drag its four corner handles (or use the corner
+                    fields below the stage) to pin each corner independently —
+                    this fakes real perspective when the box surface isn't
+                    flat-on to the camera (e.g. a tilted lid or an angled
+                    photo), which a simple skew can't do. The warp is emitted as
+                    a CSS <code>matrix3d()</code> on the photo, plus the corner
+                    offsets (in px, relative to the rendered box size) in the
+                    JSON so you can recompute it if you resize. top/left are
+                    still percentages relative to the box container.
                 </div>
             </div>
         </div>
@@ -490,12 +601,155 @@
             const boxImg = document.getElementById("boxImg");
             const fileInput = document.getElementById("fileInput");
             const cakeFileInput = document.getElementById("cakeFileInput");
-            const addBtn = document.getElementById("addBtn");
-            const removeBtn = document.getElementById("removeBtn");
             const sizeInput = document.getElementById("sizeInput");
             const rotationInput = document.getElementById("rotationInput");
-            const skewXInput = document.getElementById("skewXInput");
-            const skewYInput = document.getElementById("skewYInput");
+            const resetCornersBtn = document.getElementById("resetCornersBtn");
+            const cornerInputs = {
+                tl: {
+                    x: document.getElementById("cornerTLx"),
+                    y: document.getElementById("cornerTLy"),
+                },
+                tr: {
+                    x: document.getElementById("cornerTRx"),
+                    y: document.getElementById("cornerTRy"),
+                },
+                bl: {
+                    x: document.getElementById("cornerBLx"),
+                    y: document.getElementById("cornerBLy"),
+                },
+                br: {
+                    x: document.getElementById("cornerBRx"),
+                    y: document.getElementById("cornerBRy"),
+                },
+            };
+
+            function defaultCorners() {
+                return {
+                    tl: { x: 0, y: 0 },
+                    tr: { x: 0, y: 0 },
+                    bl: { x: 0, y: 0 },
+                    br: { x: 0, y: 0 },
+                };
+            }
+
+            // Maps a rectangle of size w x h to an arbitrary quadrilateral
+            // (given as corner offsets, in px, from the rectangle's own corners)
+            // and returns a CSS matrix3d() string implementing that projective warp.
+            // Based on Paul Heckbert's unit-square-to-quad derivation.
+            // Formats a number as a plain fixed-point string, never scientific
+            // notation, with no trailing zeros — safe to embed in a pipe/colon
+            // separated string that Liquid (or anything else) will split on.
+            function fmtNum(n) {
+                if (!isFinite(n)) return "0";
+                if (Math.abs(n) < 1e-8) n = 0;
+                let s = n.toFixed(6);
+                s = s.replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+                if (s === "-0") s = "0";
+                return s;
+            }
+
+            // Returns the 3x3 projective coefficients {a..i} mapping a w x h
+            // rectangle to the quad described by `corners` (corner offsets in
+            // px from the rectangle's own corners). Based on Paul Heckbert's
+            // unit-square-to-quad derivation.
+            function cornerPinCoeffs(w, h, corners) {
+                const p0 = { x: corners.tl.x, y: corners.tl.y }; // top-left
+                const p1 = { x: w + corners.tr.x, y: corners.tr.y }; // top-right
+                const p2 = { x: w + corners.br.x, y: h + corners.br.y }; // bottom-right
+                const p3 = { x: corners.bl.x, y: h + corners.bl.y }; // bottom-left
+
+                const x0 = p0.x,
+                    y0 = p0.y,
+                    x1 = p1.x,
+                    y1 = p1.y,
+                    x2 = p2.x,
+                    y2 = p2.y,
+                    x3 = p3.x,
+                    y3 = p3.y;
+
+                const dx1 = x1 - x2,
+                    dx2 = x3 - x2,
+                    dx3 = x0 - x1 + x2 - x3;
+                const dy1 = y1 - y2,
+                    dy2 = y3 - y2,
+                    dy3 = y0 - y1 + y2 - y3;
+
+                let a, b, c, d, e, f, g, hh, i;
+                if (Math.abs(dx3) < 1e-9 && Math.abs(dy3) < 1e-9) {
+                    a = x1 - x0;
+                    b = x2 - x1;
+                    c = x0;
+                    d = y1 - y0;
+                    e = y2 - y1;
+                    f = y0;
+                    g = 0;
+                    hh = 0;
+                    i = 1;
+                } else {
+                    const denom = dx1 * dy2 - dx2 * dy1;
+                    g = (dx3 * dy2 - dx2 * dy3) / denom;
+                    hh = (dx1 * dy3 - dx3 * dy1) / denom;
+                    a = x1 - x0 + g * x1;
+                    b = x3 - x0 + hh * x3;
+                    c = x0;
+                    d = y1 - y0 + g * y1;
+                    e = y3 - y0 + hh * y3;
+                    f = y0;
+                    i = 1;
+                }
+
+                // compose with a scale of 1/w, 1/h so the matrix accepts
+                // (x,y) in [0,w]x[0,h] (the element's own pixel box) directly
+                return {
+                    a: a / w,
+                    b: b / h,
+                    c,
+                    d: d / w,
+                    e: e / h,
+                    f,
+                    g: g / w,
+                    h: hh / h,
+                    i,
+                };
+            }
+
+            function matrix3dString(m) {
+                return `matrix3d(${fmtNum(m.a)},${fmtNum(m.d)},0,${fmtNum(m.g)}, ${fmtNum(m.b)},${fmtNum(m.e)},0,${fmtNum(m.h)}, 0,0,1,0, ${fmtNum(m.c)},${fmtNum(m.f)},0,${fmtNum(m.i)})`;
+            }
+
+            // Composes a rotation (in degrees, about the origin) INTO the
+            // matrix coefficients, i.e. applies the corner-pin first then
+            // rotates the result — matching `transform: rotate(deg) matrix3d(...)`
+            // rendered on an element with transform-origin: 0 0.
+            function rotateCoeffs(m, deg) {
+                const rad = (deg * Math.PI) / 180;
+                const cos = Math.cos(rad),
+                    sin = Math.sin(rad);
+                return {
+                    a: cos * m.a - sin * m.d,
+                    b: cos * m.b - sin * m.e,
+                    c: cos * m.c - sin * m.f,
+                    d: sin * m.a + cos * m.d,
+                    e: sin * m.b + cos * m.e,
+                    f: sin * m.c + cos * m.f,
+                    g: m.g,
+                    h: m.h,
+                    i: m.i,
+                };
+            }
+
+            function cornersToMatrix3d(w, h, corners) {
+                return matrix3dString(cornerPinCoeffs(w, h, corners));
+            }
+
+            // Same warp, but with rotation baked directly into the matrix so a
+            // SINGLE matrix3d(...) string fully reproduces the look — no
+            // separate rotate() needed. Use this wherever rotation won't be
+            // carried along as its own field (e.g. the Liquid-safe pipe export).
+            function cornersToMatrix3dWithRotation(w, h, corners, deg) {
+                const coeffs = cornerPinCoeffs(w, h, corners);
+                return matrix3dString(deg ? rotateCoeffs(coeffs, deg) : coeffs);
+            }
             const listEl = document.getElementById("list");
             const output = document.getElementById("output");
             const copyBtn = document.getElementById("copyBtn");
@@ -559,18 +813,15 @@
             });
 
             function loadCurrentIntoJson() {
+                const { top, left, size, rotation, corners } = cakes[0];
                 jsonInput.value = JSON.stringify(
-                    cakes.map(
-                        ({ id, top, left, size, rotation, skewX, skewY }) => ({
-                            id,
-                            top: +top.toFixed(2),
-                            left: +left.toFixed(2),
-                            size,
-                            rotation: rotation || 0,
-                            skewX: skewX || 0,
-                            skewY: skewY || 0,
-                        }),
-                    ),
+                    {
+                        top: +top.toFixed(2),
+                        left: +left.toFixed(2),
+                        size,
+                        rotation: rotation || 0,
+                        corners: corners || defaultCorners(),
+                    },
                     null,
                     2,
                 );
@@ -578,41 +829,94 @@
             }
             loadCurrentBtn.addEventListener("click", loadCurrentIntoJson);
 
+            // Parses the "Copy | list" pipe-separated format (top/left/size/
+            // rotation/tl_x/tl_y/.../br_y, corners as % of box size) back
+            // into the same shape the JSON path uses (corners in px, based
+            // on the current stage's rendered size for the given size%).
+            function parsePipeList(raw) {
+                const kv = {};
+                raw.split("|").forEach((part) => {
+                    const idx = part.indexOf(":");
+                    if (idx === -1) return;
+                    const key = part.slice(0, idx).trim();
+                    const value = part.slice(idx + 1).trim();
+                    kv[key] = value;
+                });
+
+                const top = Number(kv.top);
+                const left = Number(kv.left);
+                let size = Number(kv.size);
+                if (isNaN(size)) size = parseFloat(sizeInput.value) || 14;
+                const rotation = Number(kv.rotation) || 0;
+
+                const wPx = stage.clientWidth * (size / 100);
+                const corners = defaultCorners();
+                ["tl", "tr", "bl", "br"].forEach((k) => {
+                    const px = Number(kv[k + "_x"]);
+                    const py = Number(kv[k + "_y"]);
+                    corners[k].x = isNaN(px) ? 0 : (px / 100) * wPx;
+                    corners[k].y = isNaN(py) ? 0 : (py / 100) * wPx;
+                });
+
+                return { top, left, size, rotation, corners };
+            }
+
             applyJsonBtn.addEventListener("click", () => {
                 try {
-                    const inputValue = jsonInput.value.replace(/\\"/g, '"');
-                    const parsed = JSON.parse(inputValue);
-                    if (!Array.isArray(parsed))
-                        throw new Error("JSON must be an array");
-                    const cleaned = parsed.map((item, i) => {
-                        const top = Number(item.top);
-                        const left = Number(item.left);
-                        const size =
-                            Number(item.size) ||
-                            parseFloat(sizeInput.value) ||
-                            14;
-                        if (isNaN(top) || isNaN(left))
-                            throw new Error(`Item ${i} missing valid top/left`);
-                        let rotation = Number(item.rotation);
-                        if (isNaN(rotation)) rotation = 0;
-                        let skewX = Number(item.skewX);
-                        if (isNaN(skewX)) skewX = 0;
-                        let skewY = Number(item.skewY);
-                        if (isNaN(skewY)) skewY = 0;
-                        return {
-                            id: item.id != null ? Number(item.id) : i + 1,
-                            top: Math.max(0, Math.min(100, top)),
-                            left: Math.max(0, Math.min(100, left)),
-                            size: Math.max(1, Math.min(100, size)),
-                            rotation: ((rotation % 360) + 360) % 360,
-                            skewX: Math.max(-80, Math.min(80, skewX)),
-                            skewY: Math.max(-80, Math.min(80, skewY)),
-                        };
-                    });
-                    cakes = cleaned;
-                    counter = Math.max(0, ...cakes.map((c) => c.id));
-                    selectedId = cakes.length ? cakes[0].id : null;
-                    jsonError.textContent = `Applied ${cakes.length} position(s).`;
+                    const raw = jsonInput.value.trim();
+                    let item;
+                    if (raw.startsWith("{")) {
+                        const inputValue = raw.replace(/\\"/g, '"');
+                        item = JSON.parse(inputValue);
+                        if (Array.isArray(item))
+                            throw new Error(
+                                "Only one photo is supported — provide a single object, not an array",
+                            );
+                    } else if (raw.includes("|") && raw.includes(":")) {
+                        item = parsePipeList(raw);
+                    } else {
+                        throw new Error(
+                            "Unrecognized format — paste JSON or the pipe-separated list",
+                        );
+                    }
+                    const top = Number(item.top);
+                    const left = Number(item.left);
+                    const size =
+                        Number(item.size) || parseFloat(sizeInput.value) || 14;
+                    if (isNaN(top) || isNaN(left))
+                        throw new Error("Missing valid top/left");
+                    let rotation = Number(item.rotation);
+                    if (isNaN(rotation)) rotation = 0;
+                    const corners = defaultCorners();
+                    if (item.corners && typeof item.corners === "object") {
+                        ["tl", "tr", "bl", "br"].forEach((k) => {
+                            if (item.corners[k]) {
+                                const cx = Number(item.corners[k].x);
+                                const cy = Number(item.corners[k].y);
+                                corners[k].x = Math.max(
+                                    -60,
+                                    Math.min(60, isNaN(cx) ? 0 : cx),
+                                );
+                                corners[k].y = Math.max(
+                                    -60,
+                                    Math.min(60, isNaN(cy) ? 0 : cy),
+                                );
+                            }
+                        });
+                    }
+                    cakes[0] = {
+                        id: cakes[0].id,
+                        top: Math.max(0, Math.min(100, top)),
+                        left: Math.max(0, Math.min(100, left)),
+                        size: Math.max(1, Math.min(100, size)),
+                        rotation: ((rotation % 360) + 360) % 360,
+                        corners,
+                    };
+                    selectedId = cakes[0].id;
+                    sizeInput.value = cakes[0].size;
+                    rotationInput.value = cakes[0].rotation;
+                    syncCornerInputs(cakes[0]);
+                    jsonError.textContent = "Applied position.";
                     jsonError.style.color = "#3a7d44";
                     render();
                 } catch (err) {
@@ -630,25 +934,22 @@
                     left,
                     size,
                     rotation: 0,
-                    skewX: 0,
-                    skewY: 0,
+                    corners: defaultCorners(),
                 };
-                cakes.push(cc);
+                cakes = [cc];
                 selectedId = cc.id;
                 rotationInput.value = 0;
-                skewXInput.value = 0;
-                skewYInput.value = 0;
+                syncCornerInputs(cc);
                 render();
             }
 
-            addBtn.addEventListener("click", () => addcake(50, 50));
-
-            removeBtn.addEventListener("click", () => {
-                if (selectedId == null) return;
-                cakes = cakes.filter((c) => c.id !== selectedId);
-                selectedId = null;
-                render();
-            });
+            function syncCornerInputs(cc) {
+                const corners = cc.corners || defaultCorners();
+                ["tl", "tr", "bl", "br"].forEach((k) => {
+                    cornerInputs[k].x.value = corners[k].x;
+                    cornerInputs[k].y.value = corners[k].y;
+                });
+            }
 
             sizeInput.addEventListener("input", () => {
                 if (selectedId == null) return;
@@ -668,89 +969,171 @@
                 }
             });
 
-            skewXInput.addEventListener("input", () => {
-                if (selectedId == null) return;
-                const cc = cakes.find((c) => c.id === selectedId);
-                if (cc) {
-                    cc.skewX = parseFloat(skewXInput.value) || 0;
+            ["tl", "tr", "bl", "br"].forEach((k) => {
+                cornerInputs[k].x.addEventListener("input", () => {
+                    if (selectedId == null) return;
+                    const cc = cakes.find((c) => c.id === selectedId);
+                    if (!cc) return;
+                    if (!cc.corners) cc.corners = defaultCorners();
+                    cc.corners[k].x = parseFloat(cornerInputs[k].x.value) || 0;
                     render();
-                }
+                });
+                cornerInputs[k].y.addEventListener("input", () => {
+                    if (selectedId == null) return;
+                    const cc = cakes.find((c) => c.id === selectedId);
+                    if (!cc) return;
+                    if (!cc.corners) cc.corners = defaultCorners();
+                    cc.corners[k].y = parseFloat(cornerInputs[k].y.value) || 0;
+                    render();
+                });
             });
 
-            skewYInput.addEventListener("input", () => {
+            resetCornersBtn.addEventListener("click", () => {
                 if (selectedId == null) return;
                 const cc = cakes.find((c) => c.id === selectedId);
-                if (cc) {
-                    cc.skewY = parseFloat(skewYInput.value) || 0;
-                    render();
-                }
+                if (!cc) return;
+                cc.corners = defaultCorners();
+                syncCornerInputs(cc);
+                render();
             });
 
             function render() {
-                // remove existing cake elements
-                stage.querySelectorAll(".cake").forEach((el) => el.remove());
+                // remove existing cake elements (both layers)
+                stage
+                    .querySelectorAll(".cake, .cake-photo")
+                    .forEach((el) => el.remove());
+
+                const stageW = stage.clientWidth;
 
                 cakes.forEach((cc) => {
-                    const el = document.createElement("div");
-                    el.className =
-                        "cake" + (cc.id === selectedId ? " selected" : "");
-                    el.style.top = cc.top + "%";
-                    el.style.left = cc.left + "%";
-                    el.style.width = cc.size + "%";
-                    el.dataset.id = cc.id;
+                    if (!cc.corners) cc.corners = defaultCorners();
 
+                    // px size of this element, used to build the matrix3d
+                    const wPx = stageW * (cc.size / 100);
+                    const hPx = wPx; // element is square (width%, aspect-ratio 1/1)
+
+                    // photo layer: sits BELOW the box image
+                    const photoEl = document.createElement("div");
+                    photoEl.className = "cake-photo";
+                    photoEl.style.top = cc.top + "%";
+                    photoEl.style.left = cc.left + "%";
+                    photoEl.style.width = cc.size + "%";
+                    photoEl.dataset.id = cc.id;
+
+                    let photoImg = null;
                     if (cakeImgSrc) {
-                        const img = document.createElement("img");
-                        img.src = cakeImgSrc;
-                        img.style.transform = `rotate(${cc.rotation || 0}deg) skewX(${cc.skewX || 0}deg) skewY(${cc.skewY || 0}deg)`;
-                        el.appendChild(img);
-                    } else {
-                        el.textContent = cc.id;
+                        photoImg = document.createElement("img");
+                        photoImg.src = cakeImgSrc;
+                        const matrix3d = cornersToMatrix3d(
+                            wPx,
+                            hPx,
+                            cc.corners,
+                        );
+                        photoImg.style.transformOrigin = "0 0";
+                        photoImg.style.transform = `rotate(${cc.rotation || 0}deg) ${matrix3d}`;
+                        photoEl.appendChild(photoImg);
                     }
-                    const badge = document.createElement("span");
-                    badge.className = "badge";
-                    badge.textContent = cc.id;
-                    if (cakeImgSrc) el.appendChild(badge);
-                    makeDraggable(el, cc);
-                    stage.prepend(el);
+                    stage.appendChild(photoEl);
+
+                    // frame layer: outline + drag target + corner handles, ALWAYS above the box image
+                    const frameEl = document.createElement("div");
+                    frameEl.className =
+                        "cake" + (cc.id === selectedId ? " selected" : "");
+                    frameEl.style.top = cc.top + "%";
+                    frameEl.style.left = cc.left + "%";
+                    frameEl.style.width = cc.size + "%";
+                    frameEl.dataset.id = cc.id;
+
+                    makeDraggable(frameEl, photoEl, cc);
+
+                    if (cc.id === selectedId) {
+                        ["tl", "tr", "bl", "br"].forEach((k) => {
+                            const handle = document.createElement("div");
+                            handle.className = "corner-handle";
+                            const baseX = k.includes("r") ? 100 : 0;
+                            const baseY = k.includes("b") ? 100 : 0;
+                            const offX = (cc.corners[k].x / wPx) * 100;
+                            const offY = (cc.corners[k].y / hPx) * 100;
+                            handle.style.left = baseX + offX + "%";
+                            handle.style.top = baseY + offY + "%";
+                            makeCornerDraggable(
+                                handle,
+                                frameEl,
+                                photoImg,
+                                cc,
+                                k,
+                            );
+                            frameEl.appendChild(handle);
+                        });
+                    }
+
+                    stage.appendChild(frameEl);
                 });
 
                 // list
-                listEl.innerHTML =
-                    cakes
-                        .map(
-                            (cc) =>
-                                `<div class="row"><span class="name">#${cc.id}</span><span class="vals">top: ${cc.top.toFixed(2)}%  left: ${cc.left.toFixed(2)}%  size: ${cc.size}%  rot: ${cc.rotation || 0}deg  skew: ${cc.skewX || 0}/${cc.skewY || 0}deg</span></div>`,
-                        )
-                        .join("") ||
-                    '<div class="row"><span class="vals">No cakes yet — click "Add cake"</span></div>';
+                listEl.innerHTML = cakes
+                    .map((cc) => {
+                        const c = cc.corners || defaultCorners();
+                        const w = stageW * (cc.size / 100);
+                        const m = cakeImgSrc
+                            ? cornersToMatrix3d(w, w, c)
+                            : "none";
+                        return `<div class="row"><span class="name">Photo</span><span class="vals">top: ${cc.top.toFixed(2)}%  left: ${cc.left.toFixed(2)}%  size: ${cc.size}%  rot: ${cc.rotation || 0}deg<br>${m}</span></div>`;
+                    })
+                    .join("");
 
                 // output
-                const cssBlock = cakes
-                    .map(
-                        (cc) =>
-                            `.cake-${cc.id} {
-  position: absolute;
+                const cc = cakes[0];
+                const corners = cc.corners || defaultCorners();
+                const wPxOut = stageW * (cc.size / 100);
+                const matrix3dOut = cakeImgSrc
+                    ? cornersToMatrix3d(wPxOut, wPxOut, corners)
+                    : "none";
+
+                // corner offsets as % of the box's own rendered size, so
+                // they stay correct at ANY box pixel size (responsive/%-width layouts)
+                const cornersPct = {};
+                ["tl", "tr", "bl", "br"].forEach((k) => {
+                    cornersPct[k] = {
+                        x: +((corners[k].x / wPxOut) * 100).toFixed(3),
+                        y: +((corners[k].y / wPxOut) * 100).toFixed(3),
+                    };
+                });
+
+                const cssBlock = `.photo {
+  position: absolute; /* nearest ancestor needs position: relative */
   top: ${cc.top.toFixed(2)}%;
   left: ${cc.left.toFixed(2)}%;
   width: ${cc.size}%;
-  transform: translate(-50%, -50%) rotate(${cc.rotation || 0}deg) skewX(${cc.skewX || 0}deg) skewY(${cc.skewY || 0}deg);
-}`,
-                    )
-                    .join("\n\n");
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  overflow: hidden;
+  transform: translate(-50%, -50%);
+}
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* Your layout uses %-width boxes, so a frozen matrix3d (correct at only
+   one pixel size) will look wrong at other viewport widths. Instead, put
+   the corner-pin as data attributes and let photo-warp.js (see the
+   downloaded file) compute + recompute matrix3d() on load and on resize: */
+<img class="photo-img" data-rotation="${cc.rotation || 0}"
+     data-corners='${JSON.stringify(cornersPct)}'
+     src="...">`;
 
                 const jsonBlock = JSON.stringify(
-                    cakes.map(
-                        ({ id, top, left, size, rotation, skewX, skewY }) => ({
-                            id,
-                            top: +top.toFixed(2),
-                            left: +left.toFixed(2),
-                            size,
-                            rotation: rotation || 0,
-                            skewX: skewX || 0,
-                            skewY: skewY || 0,
-                        }),
-                    ),
+                    {
+                        top: +cc.top.toFixed(2),
+                        left: +cc.left.toFixed(2),
+                        size: cc.size,
+                        rotation: cc.rotation || 0,
+                        cornersPct,
+                        matrix3d_frozen_at_Xpx: matrix3dOut,
+                    },
                     null,
                     2,
                 );
@@ -758,31 +1141,23 @@
                 output.value = cssBlock + "\n\n/* JSON */\n" + jsonBlock;
             }
 
-            function makeDraggable(el, cc) {
+            function makeDraggable(frameEl, photoEl, cc) {
                 let dragging = false;
 
-                el.addEventListener("pointerdown", (e) => {
+                frameEl.addEventListener("pointerdown", (e) => {
                     dragging = true;
-                    el.setPointerCapture(e.pointerId);
+                    frameEl.setPointerCapture(e.pointerId);
                     e.preventDefault();
                     if (selectedId !== cc.id) {
                         selectedId = cc.id;
                         sizeInput.value = cc.size;
                         rotationInput.value = cc.rotation || 0;
-                        skewXInput.value = cc.skewX || 0;
-                        skewYInput.value = cc.skewY || 0;
-                        stage
-                            .querySelectorAll(".cake")
-                            .forEach((c) =>
-                                c.classList.toggle(
-                                    "selected",
-                                    c.dataset.id == cc.id,
-                                ),
-                            );
+                        syncCornerInputs(cc);
+                        render();
                     }
                 });
 
-                el.addEventListener("pointermove", (e) => {
+                frameEl.addEventListener("pointermove", (e) => {
                     if (!dragging) return;
                     const rect = stage.getBoundingClientRect();
                     let left = ((e.clientX - rect.left) / rect.width) * 100;
@@ -791,12 +1166,65 @@
                     top = Math.max(0, Math.min(100, top));
                     cc.top = top;
                     cc.left = left;
-                    el.style.top = top + "%";
-                    el.style.left = left + "%";
+                    frameEl.style.top = top + "%";
+                    frameEl.style.left = left + "%";
+                    photoEl.style.top = top + "%";
+                    photoEl.style.left = left + "%";
                     updateListLive();
                 });
 
-                el.addEventListener("pointerup", (e) => {
+                frameEl.addEventListener("pointerup", (e) => {
+                    dragging = false;
+                    render();
+                });
+            }
+
+            function makeCornerDraggable(handle, frameEl, photoImg, cc, key) {
+                let dragging = false;
+
+                handle.addEventListener("pointerdown", (e) => {
+                    dragging = true;
+                    handle.setPointerCapture(e.pointerId);
+                    e.preventDefault();
+                    e.stopPropagation();
+                });
+
+                handle.addEventListener("pointermove", (e) => {
+                    if (!dragging) return;
+                    e.stopPropagation();
+                    const rect = frameEl.getBoundingClientRect();
+                    const baseX = key.includes("r") ? rect.width : 0;
+                    const baseY = key.includes("b") ? rect.height : 0;
+                    let dx = e.clientX - rect.left - baseX;
+                    let dy = e.clientY - rect.top - baseY;
+                    dx = Math.max(
+                        -rect.width * 0.6,
+                        Math.min(rect.width * 0.6, dx),
+                    );
+                    dy = Math.max(
+                        -rect.height * 0.6,
+                        Math.min(rect.height * 0.6, dy),
+                    );
+                    cc.corners[key].x = Math.round(dx);
+                    cc.corners[key].y = Math.round(dy);
+                    if (selectedId === cc.id) {
+                        cornerInputs[key].x.value = cc.corners[key].x;
+                        cornerInputs[key].y.value = cc.corners[key].y;
+                    }
+                    if (photoImg) {
+                        const matrix3d = cornersToMatrix3d(
+                            rect.width,
+                            rect.height,
+                            cc.corners,
+                        );
+                        photoImg.style.transform = `rotate(${cc.rotation || 0}deg) ${matrix3d}`;
+                    }
+                    handle.style.left = ((baseX + dx) / rect.width) * 100 + "%";
+                    handle.style.top = ((baseY + dy) / rect.height) * 100 + "%";
+                });
+
+                handle.addEventListener("pointerup", (e) => {
+                    if (!dragging) return;
                     dragging = false;
                     render();
                 });
@@ -824,25 +1252,47 @@
             });
 
             copyMinBtn.addEventListener("click", async () => {
-                const minified = JSON.stringify(
-                    cakes.map(
-                        ({ id, top, left, size, rotation, skewX, skewY }) => ({
-                            id,
-                            top: +top.toFixed(2),
-                            left: +left.toFixed(2),
-                            size,
-                            rotation: rotation || 0,
-                            skewX: skewX || 0,
-                            skewY: skewY || 0,
-                        }),
-                    ),
-                );
-                const escapedJson = JSON.stringify(minified).slice(1, -1);
+                // Liquid-safe, flat pipe-separated list, parseable with the
+                // same pattern you're already using:
+                //   assign parts = info | split: ' | '
+                //   for part in parts
+                //     assign kv = part | split: ': '
+                //     ...
+                // Corner values are % of the box's own rendered size (not raw
+                // px), so they stay correct at any viewport width — meant to
+                // be reassembled in Liquid into the data-corners JSON string
+                // and dropped straight onto the <img>, e.g.:
+                //   data-rotation="{{ rotation }}"
+                //   data-corners='{"tl":{"x":{{ tl_x }},"y":{{ tl_y }}},"tr":{"x":{{ tr_x }},"y":{{ tr_y }}},"bl":{"x":{{ bl_x }},"y":{{ bl_y }}},"br":{"x":{{ br_x }},"y":{{ br_y }}}}'
+                const cc = cakes[0];
+                const c = cc.corners || defaultCorners();
+                const wPx = stage.clientWidth * (cc.size / 100);
+                const pct = {};
+                ["tl", "tr", "bl", "br"].forEach((k) => {
+                    pct[k] = {
+                        x: +((c[k].x / wPx) * 100).toFixed(3),
+                        y: +((c[k].y / wPx) * 100).toFixed(3),
+                    };
+                });
+                const pipeList = [
+                    `top: ${+cc.top.toFixed(2)}`,
+                    `left: ${+cc.left.toFixed(2)}`,
+                    `size: ${cc.size}`,
+                    `rotation: ${cc.rotation || 0}`,
+                    `tl_x: ${pct.tl.x}`,
+                    `tl_y: ${pct.tl.y}`,
+                    `tr_x: ${pct.tr.x}`,
+                    `tr_y: ${pct.tr.y}`,
+                    `bl_x: ${pct.bl.x}`,
+                    `bl_y: ${pct.bl.y}`,
+                    `br_x: ${pct.br.x}`,
+                    `br_y: ${pct.br.y}`,
+                ].join(" | ");
                 try {
-                    await navigator.clipboard.writeText(escapedJson);
+                    await navigator.clipboard.writeText(pipeList);
                 } catch (e) {
                     const ta = document.createElement("textarea");
-                    ta.value = escapedJson;
+                    ta.value = pipeList;
                     document.body.appendChild(ta);
                     ta.select();
                     document.execCommand("copy");
@@ -850,7 +1300,7 @@
                 }
                 copyMinBtn.textContent = "Copied!";
                 setTimeout(
-                    () => (copyMinBtn.textContent = "Copy minified JSON"),
+                    () => (copyMinBtn.textContent = "Copy | list"),
                     1200,
                 );
             });
