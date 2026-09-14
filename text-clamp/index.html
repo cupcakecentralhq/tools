@@ -1,0 +1,758 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>CSS Clamp() Calculator</title>
+        <style>
+            :root {
+                --bg: #0a0713;
+                --bg-grid: #150f28;
+                --panel: #150e26;
+                --panel-2: #1c1338;
+                --border: #3d2b6b;
+                --border-bright: #7b5cff;
+                --text: #eae6ff;
+                --muted: #9a8fc4;
+                --cyan: #2ee6d6;
+                --magenta: #ff2ea6;
+                --amber: #ffb62e;
+                --accent: #ff2ea6;
+                --accent-hover: #ff5cc0;
+                --radius: 4px;
+                --mono:
+                    "Share Tech Mono", "SFMono-Regular", Consolas, monospace;
+                --display: "Orbitron", sans-serif;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            body {
+                margin: 0;
+                padding: 40px 20px;
+                min-height: 100vh;
+                background:
+                    linear-gradient(
+                        180deg,
+                        rgba(10, 7, 19, 0.4),
+                        rgba(10, 7, 19, 0.95) 70%
+                    ),
+                    repeating-linear-gradient(
+                        0deg,
+                        transparent,
+                        transparent 38px,
+                        rgba(123, 92, 255, 0.07) 39px,
+                        transparent 40px
+                    ),
+                    repeating-linear-gradient(
+                        90deg,
+                        transparent,
+                        transparent 38px,
+                        rgba(123, 92, 255, 0.07) 39px,
+                        transparent 40px
+                    ),
+                    radial-gradient(
+                        ellipse at 50% -10%,
+                        #2a1a55 0%,
+                        var(--bg) 55%
+                    );
+                color: var(--text);
+                font-family: var(--mono);
+            }
+
+            .clamp-tool {
+                max-width: 720px;
+                margin: 0 auto;
+                background: linear-gradient(180deg, var(--panel), #100a1f);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 32px;
+                position: relative;
+                box-shadow:
+                    0 0 0 1px rgba(123, 92, 255, 0.15),
+                    0 0 40px rgba(255, 46, 166, 0.12),
+                    0 0 80px rgba(46, 230, 214, 0.06),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+            }
+
+            .clamp-tool::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: linear-gradient(
+                    90deg,
+                    transparent,
+                    var(--cyan),
+                    var(--magenta),
+                    var(--amber),
+                    transparent
+                );
+                opacity: 0.8;
+            }
+
+            .clamp-tool > h1 {
+                font-family: var(--display);
+                font-weight: 900;
+                font-size: 1.3rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                margin: 0 0 28px;
+                color: var(--text);
+                text-shadow:
+                    0 0 8px rgba(255, 46, 166, 0.6),
+                    0 0 24px rgba(46, 230, 214, 0.25);
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+
+            .clamp-tool > h1::before {
+                content: "▲";
+                color: var(--cyan);
+                font-size: 0.9rem;
+                text-shadow: 0 0 10px var(--cyan);
+            }
+
+            .wp-block-columns {
+                display: flex;
+                gap: 24px;
+                margin-bottom: 4px;
+            }
+
+            .wp-block-columns.is-not-stacked-on-mobile {
+                flex-wrap: nowrap;
+            }
+
+            .wp-block-column {
+                flex: 1;
+                min-width: 0;
+            }
+
+            .clamp-head {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                flex-wrap: wrap;
+                margin-bottom: 12px;
+            }
+
+            .clamp-head h2 {
+                font-family: var(--display);
+                font-size: 0.78rem;
+                font-weight: 700;
+                letter-spacing: 0.14em;
+                text-transform: uppercase;
+                margin: 0;
+                color: var(--cyan);
+                text-shadow: 0 0 10px rgba(46, 230, 214, 0.5);
+                flex: 1;
+            }
+
+            label {
+                display: block;
+                font-size: 0.72rem;
+                color: var(--muted);
+                margin-bottom: 6px;
+                font-weight: 400;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .convert-input-wrap {
+                margin-bottom: 8px;
+            }
+
+            .convert-input {
+                display: flex;
+                align-items: center;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                overflow: hidden;
+                background: #0d0819;
+                transition:
+                    border-color 0.15s ease,
+                    box-shadow 0.15s ease;
+            }
+
+            .convert-input:focus-within {
+                border-color: var(--cyan);
+                box-shadow:
+                    0 0 0 1px var(--cyan),
+                    0 0 14px rgba(46, 230, 214, 0.35);
+            }
+
+            .clamp-input {
+                border: none;
+                outline: none;
+                padding: 10px 12px;
+                font-size: 0.95rem;
+                width: 100%;
+                min-width: 0;
+                font-family: var(--mono);
+                color: var(--amber);
+                background: transparent;
+            }
+
+            .clamp-input::selection {
+                background: var(--magenta);
+                color: #fff;
+            }
+
+            .convert-unit {
+                padding: 0 12px;
+                font-size: 0.75rem;
+                color: var(--muted);
+                background: #1a1230;
+                align-self: stretch;
+                display: flex;
+                align-items: center;
+                border-left: 1px solid var(--border);
+                white-space: nowrap;
+                letter-spacing: 0.06em;
+            }
+
+            /* Switch / radio pill fieldsets */
+            fieldset {
+                border: none;
+                margin: 0;
+                padding: 0;
+            }
+
+            .switch-field {
+                display: inline-flex;
+                background: #0d0819;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 3px;
+                gap: 2px;
+            }
+
+            .switch-field input[type="radio"] {
+                position: absolute;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .switch-field label {
+                margin: 0;
+                padding: 5px 12px;
+                font-size: 0.7rem;
+                font-weight: 700;
+                letter-spacing: 0.08em;
+                color: var(--muted);
+                border-radius: 2px;
+                cursor: pointer;
+                transition:
+                    background 0.15s ease,
+                    color 0.15s ease,
+                    text-shadow 0.15s ease;
+            }
+
+            .switch-field input[type="radio"]:checked + label {
+                background: linear-gradient(180deg, var(--magenta), #b0177a);
+                color: #fff;
+                text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+                box-shadow: 0 0 12px rgba(255, 46, 166, 0.55);
+            }
+
+            .base-font-set {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                margin-top: 10px;
+                width: 100%;
+            }
+
+            .base-font-set label {
+                margin: 0;
+                white-space: nowrap;
+            }
+
+            .base-font-set .convert-input {
+                max-width: 110px;
+            }
+
+            .base-font-set.is-hidden {
+                display: none;
+            }
+
+            hr.clamp-divider {
+                border: none;
+                border-top: 1px dashed var(--border);
+                margin: 28px 0;
+                position: relative;
+            }
+
+            hr.clamp-divider::after {
+                content: "◆";
+                position: absolute;
+                left: 50%;
+                top: -8px;
+                transform: translateX(-50%);
+                background: var(--panel);
+                color: var(--border-bright);
+                font-size: 0.7rem;
+                padding: 0 8px;
+            }
+
+            .clamp-result-contain {
+                display: flex;
+                align-items: stretch;
+                gap: 8px;
+                background: #05040a;
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 6px;
+                box-shadow:
+                    inset 0 0 20px rgba(46, 230, 214, 0.06),
+                    0 0 20px rgba(255, 46, 166, 0.08);
+            }
+
+            .clamp-result {
+                flex: 1;
+                display: flex;
+                align-items: center;
+                padding: 10px 14px;
+                font-family: var(--mono);
+                font-size: 0.9rem;
+                color: var(--cyan);
+                text-shadow: 0 0 8px rgba(46, 230, 214, 0.45);
+                overflow-x: auto;
+                white-space: nowrap;
+                background: transparent;
+            }
+
+            .copy-clamp {
+                border: 1px solid var(--border-bright);
+                background: transparent;
+                color: var(--amber);
+                font-family: var(--display);
+                font-weight: 700;
+                font-size: 0.72rem;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                padding: 0 18px;
+                border-radius: 2px;
+                cursor: pointer;
+                transition:
+                    background 0.15s ease,
+                    color 0.15s ease,
+                    box-shadow 0.15s ease;
+                white-space: nowrap;
+            }
+
+            .copy-clamp:hover {
+                background: var(--amber);
+                color: #0a0713;
+                box-shadow: 0 0 16px rgba(255, 182, 46, 0.6);
+            }
+
+            .copy-clamp.copied {
+                background: var(--cyan);
+                border-color: var(--cyan);
+                color: #0a0713;
+                box-shadow: 0 0 16px rgba(46, 230, 214, 0.6);
+            }
+
+            .clamp-result::-webkit-scrollbar {
+                height: 4px;
+            }
+            .clamp-result::-webkit-scrollbar-thumb {
+                background: var(--magenta);
+                border-radius: 2px;
+            }
+            .clamp-result::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            body::before {
+                content: "";
+                position: fixed;
+                inset: 0;
+                pointer-events: none;
+                background: repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 0, 0, 0.15),
+                    rgba(0, 0, 0, 0.15) 1px,
+                    transparent 1px,
+                    transparent 3px
+                );
+                opacity: 0.35;
+                z-index: 1;
+            }
+
+            @media (max-width: 600px) {
+                .wp-block-columns.is-not-stacked-on-mobile {
+                    flex-wrap: wrap;
+                }
+                .clamp-tool {
+                    padding: 22px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="clamp-tool">
+            <h1>CSS Clamp() Calculator</h1>
+
+            <form class="clamp-form">
+                <div class="wp-block-columns">
+                    <div class="wp-block-column">
+                        <div class="wp-block-columns">
+                            <div class="wp-block-column clamp-head">
+                                <h2>Target Values</h2>
+                                <fieldset class="switch-value switch-field">
+                                    <input
+                                        id="switch-px-value"
+                                        class="switch-value"
+                                        name="switch-value"
+                                        type="radio"
+                                        value="px"
+                                        autocomplete="off"
+                                    />
+                                    <label for="switch-px-value"
+                                        ><span>PX</span></label
+                                    >
+                                    <input
+                                        id="switch-rem-value"
+                                        class="switch-value"
+                                        name="switch-value"
+                                        type="radio"
+                                        value="rem"
+                                        checked
+                                        autocomplete="off"
+                                    />
+                                    <label for="switch-rem-value"
+                                        ><span>REM</span></label
+                                    >
+                                </fieldset>
+                                <fieldset
+                                    class="base-font-set base-font-set-value"
+                                    style="display: none"
+                                >
+                                    <label for="base-font-value">Base</label>
+                                    <div class="convert-input">
+                                        <input
+                                            id="base-font-value"
+                                            class="clamp-input"
+                                            type="number"
+                                            name="base-font-value"
+                                            value="16"
+                                            autocomplete="off"
+                                        />
+                                        <span class="convert-unit">px</span>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
+                        <div class="wp-block-columns is-not-stacked-on-mobile">
+                            <div class="wp-block-column">
+                                <div class="convert-input-wrap">
+                                    <label for="value-min">Min</label>
+                                    <div class="convert-input">
+                                        <input
+                                            id="value-min"
+                                            class="clamp-input"
+                                            type="number"
+                                            name="value-min"
+                                            value="1"
+                                            autocomplete="off"
+                                            step="any"
+                                        />
+                                        <span
+                                            class="convert-unit unitholder-value"
+                                            >rem</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="wp-block-column">
+                                <div class="convert-input-wrap">
+                                    <label for="value-max">Max</label>
+                                    <div class="convert-input">
+                                        <input
+                                            id="value-max"
+                                            class="clamp-input"
+                                            type="number"
+                                            name="value-max"
+                                            value="2.75"
+                                            autocomplete="off"
+                                            step="any"
+                                        />
+                                        <span
+                                            class="convert-unit unitholder-value"
+                                            >rem</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="wp-block-column">
+                        <div class="wp-block-columns">
+                            <div class="wp-block-column clamp-head">
+                                <h2>Viewport Range</h2>
+                                <fieldset class="switch-view switch-field">
+                                    <input
+                                        id="switch-px-view"
+                                        class="switch-view"
+                                        name="switch-view"
+                                        type="radio"
+                                        value="px"
+                                        checked
+                                        autocomplete="off"
+                                    />
+                                    <label for="switch-px-view"
+                                        ><span>PX</span></label
+                                    >
+                                    <input
+                                        id="switch-rem-view"
+                                        class="switch-view"
+                                        name="switch-view"
+                                        type="radio"
+                                        value="rem"
+                                        autocomplete="off"
+                                    />
+                                    <label for="switch-rem-view"
+                                        ><span>REM</span></label
+                                    >
+                                </fieldset>
+                                <fieldset
+                                    class="base-font-set base-font-set-view"
+                                >
+                                    <label for="base-font-view">Base</label>
+                                    <div class="convert-input">
+                                        <input
+                                            id="base-font-view"
+                                            class="clamp-input"
+                                            type="number"
+                                            name="base-font-view"
+                                            value="16"
+                                            autocomplete="off"
+                                        />
+                                        <span class="convert-unit">px</span>
+                                    </div>
+                                </fieldset>
+                            </div>
+                        </div>
+
+                        <div class="wp-block-columns is-not-stacked-on-mobile">
+                            <div class="wp-block-column">
+                                <div class="convert-input-wrap">
+                                    <label for="view-min">Min</label>
+                                    <div class="convert-input">
+                                        <input
+                                            id="view-min"
+                                            class="clamp-input"
+                                            type="number"
+                                            name="view-min"
+                                            value="600"
+                                            autocomplete="off"
+                                            step="any"
+                                        />
+                                        <span
+                                            class="convert-unit unitholder-view"
+                                            >px</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="wp-block-column">
+                                <div class="convert-input-wrap">
+                                    <label for="view-max">Max</label>
+                                    <div class="convert-input">
+                                        <input
+                                            id="view-max"
+                                            class="clamp-input"
+                                            type="number"
+                                            name="view-max"
+                                            value="1440"
+                                            autocomplete="off"
+                                            step="any"
+                                        />
+                                        <span
+                                            class="convert-unit unitholder-view"
+                                            >px</span
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <hr class="clamp-divider" />
+
+            <div class="clamp-result-contain">
+                <code id="clamp-result" class="clamp-result"
+                    >clamp(1rem, -0.25rem + 3.333vw, 2.75rem)</code
+                >
+                <button type="button" class="copy-clamp">Copy</button>
+            </div>
+        </div>
+
+        <script>
+            (function () {
+                const form = document.querySelector(".clamp-form");
+
+                const valueMin = document.getElementById("value-min");
+                const valueMax = document.getElementById("value-max");
+                const viewMin = document.getElementById("view-min");
+                const viewMax = document.getElementById("view-max");
+
+                const baseFontValue =
+                    document.getElementById("base-font-value");
+                const baseFontView = document.getElementById("base-font-view");
+
+                const switchValueRadios = form.querySelectorAll(
+                    'input[name="switch-value"]',
+                );
+                const switchViewRadios = form.querySelectorAll(
+                    'input[name="switch-view"]',
+                );
+
+                const baseFontSetValue = document.querySelector(
+                    ".base-font-set-value",
+                );
+                const baseFontSetView = document.querySelector(
+                    ".base-font-set-view",
+                );
+
+                const unitholderValue =
+                    document.querySelectorAll(".unitholder-value");
+                const unitholderView =
+                    document.querySelectorAll(".unitholder-view");
+
+                const result = document.getElementById("clamp-result");
+                const copyBtn = document.querySelector(".copy-clamp");
+
+                function getUnit(radios) {
+                    for (const r of radios) if (r.checked) return r.value;
+                    return "px";
+                }
+
+                function toggleBaseFont(unit, wrap) {
+                    wrap.classList.toggle(
+                        "is-hidden",
+                        unit !== "px" ? false : true,
+                    );
+                }
+
+                // Base font inputs are only meaningful when working in rem (to convert to/from px).
+                // Show them always but they only affect calculation when the relevant unit is rem.
+                function updateUnitLabels() {
+                    const valUnit = getUnit(switchValueRadios);
+                    const viewUnit = getUnit(switchViewRadios);
+                    unitholderValue.forEach((el) => (el.textContent = valUnit));
+                    unitholderView.forEach((el) => (el.textContent = viewUnit));
+
+                    // baseFontSetValue.style.display =
+                    //     valUnit === "rem" ? "flex" : "none";
+                    baseFontSetView.style.display =
+                        viewUnit === "rem" ? "flex" : "none";
+                }
+
+                function toPx(num, unit, base) {
+                    return unit === "rem" ? num * base : num;
+                }
+
+                function fmt(num) {
+                    // Trim to a sane number of decimals, drop trailing zeros
+                    return parseFloat(num.toFixed(4)).toString();
+                }
+
+                function calculate() {
+                    updateUnitLabels();
+
+                    const valUnit = getUnit(switchValueRadios);
+                    const viewUnit = getUnit(switchViewRadios);
+
+                    const baseVal = parseFloat(baseFontValue.value) || 16;
+                    const baseView = parseFloat(baseFontView.value) || 16;
+
+                    const vMin = parseFloat(valueMin.value);
+                    const vMax = parseFloat(valueMax.value);
+                    const pMin = parseFloat(viewMin.value);
+                    const pMax = parseFloat(viewMax.value);
+
+                    if (
+                        [vMin, vMax, pMin, pMax].some((n) => isNaN(n)) ||
+                        pMax === pMin
+                    ) {
+                        result.textContent = "clamp( ... )";
+                        return;
+                    }
+
+                    // Convert everything to px for the math, then convert the min/max back
+                    // to the target's chosen unit (rem or px) for output.
+                    const vMinPx = toPx(vMin, valUnit, baseVal);
+                    const vMaxPx = toPx(vMax, valUnit, baseVal);
+                    const pMinPx = toPx(pMin, viewUnit, baseView);
+                    const pMaxPx = toPx(pMax, viewUnit, baseView);
+
+                    const slope = (vMaxPx - vMinPx) / (pMaxPx - pMinPx);
+                    const yAxisIntersectionPx = vMinPx - slope * pMinPx;
+
+                    // Output min/max always in the target-value unit chosen (rem by default,
+                    // matching CSS best practice), intercept in rem, slope as vw.
+                    const outUnit = valUnit; // px or rem
+                    const minOut = outUnit === "rem" ? vMin / 1 : vMin; // already in chosen unit
+                    const maxOut = outUnit === "rem" ? vMax / 1 : vMax;
+
+                    const intersectionOut =
+                        outUnit === "rem"
+                            ? yAxisIntersectionPx / baseVal
+                            : yAxisIntersectionPx;
+
+                    const slopeVw = slope * 100;
+
+                    const minStr = `${fmt(minOut)}${outUnit}`;
+                    const maxStr = `${fmt(maxOut)}${outUnit}`;
+                    const sign = intersectionOut < 0 ? "-" : "+";
+                    const intersectionStr = `${fmt(Math.abs(intersectionOut))}${outUnit}`;
+                    const slopeStr = `${fmt(slopeVw)}vw`;
+
+                    const clampStr = `clamp(${minStr}, ${intersectionStr} ${sign} ${slopeStr}, ${maxStr})`;
+                    result.textContent = clampStr;
+                }
+
+                form.addEventListener("input", calculate);
+                form.addEventListener("change", calculate);
+
+                copyBtn.addEventListener("click", function () {
+                    const text = result.textContent;
+                    navigator.clipboard
+                        .writeText(text)
+                        .then(function () {
+                            const original = copyBtn.textContent;
+                            copyBtn.textContent = "Copied!";
+                            copyBtn.classList.add("copied");
+                            setTimeout(function () {
+                                copyBtn.textContent = original;
+                                copyBtn.classList.remove("copied");
+                            }, 1200);
+                        })
+                        .catch(function () {
+                            // Fallback for older browsers
+                            const range = document.createRange();
+                            range.selectNode(result);
+                            window.getSelection().removeAllRanges();
+                            window.getSelection().addRange(range);
+                            document.execCommand("copy");
+                            window.getSelection().removeAllRanges();
+                        });
+                });
+
+                calculate();
+            })();
+        </script>
+    </body>
+</html>
